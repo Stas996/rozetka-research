@@ -28,13 +28,41 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
+            this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
+            this.btnOpenXML = new System.Windows.Forms.Button();
+            this.SuspendLayout();
+            // 
+            // openFileDialog
+            // 
+            this.openFileDialog.FileName = "openFileDialog";
+            // 
+            // btnOpenXML
+            // 
+            this.btnOpenXML.Location = new System.Drawing.Point(12, 12);
+            this.btnOpenXML.Name = "btnOpenXML";
+            this.btnOpenXML.Size = new System.Drawing.Size(75, 23);
+            this.btnOpenXML.TabIndex = 0;
+            this.btnOpenXML.Text = "Open XML";
+            this.btnOpenXML.UseVisualStyleBackColor = true;
+            this.btnOpenXML.Click += new System.EventHandler(this.btnOpenXML_Click);
+            // 
+            // Form1
+            // 
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.btnOpenXML);
+            this.Name = "Form1";
             this.Text = "Form1";
+            this.Load += new System.EventHandler(this.Form1_Load);
+            this.ResumeLayout(false);
+
         }
 
         #endregion
+
+        private System.Windows.Forms.OpenFileDialog openFileDialog;
+        private System.Windows.Forms.Button btnOpenXML;
     }
 }
 
