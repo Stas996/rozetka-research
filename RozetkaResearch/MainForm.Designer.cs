@@ -145,6 +145,8 @@
             this.Controls.Add(this.btnResearch);
             this.Controls.Add(this.lblProcess);
             this.Controls.Add(this.btnOpenXML);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
             this.Name = "MainForm";
             this.Text = "Rozetka Research";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.Form1_FormClosed);

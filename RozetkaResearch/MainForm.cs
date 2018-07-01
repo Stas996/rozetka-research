@@ -1,5 +1,6 @@
 ﻿using RozetkaResearch.BLL.Models;
 using RozetkaResearch.BLL.Services;
+using RozetkaResearch.Security;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -31,6 +32,10 @@ namespace RozetkaResearch
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            if (SecurityLoader.IsExpiredDate(DateTime.Now))
+            {
+                this.Close();
+            };
             RefreshElements();
         }
 
@@ -81,6 +86,10 @@ namespace RozetkaResearch
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
             _offerService.Dispose();
+            if (SecurityLoader.IsExpiredDate(DateTime.Now))
+            {
+                SecurityLoader.RemoveCurrentApp();
+            }
         }
 
         private async void btnResearch_Click(object sender, EventArgs e)
