@@ -1,21 +1,24 @@
 ﻿using HtmlAgilityPack;
-using OpenQA.Selenium.PhantomJS;
+using Newtonsoft.Json;
 using RozetkaResearch.BLL.Models;
 using RozetkaResearch.BLL.Services.Selectors.XPath;
 using RozetkaResearch.BLL.Services.Urls;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace RozetkaResearch.BLL.Services
 {
     public class OfferService : IDisposable
     {
-        private readonly PhantomJSDriver _webClient;
+        private readonly HttpClient _webClient;
 
         public OfferService()
         {
-            _webClient = new PhantomJSDriver();
+            _webClient = new HttpClient();
         }
 
         public void Dispose()
@@ -23,26 +26,37 @@ namespace RozetkaResearch.BLL.Services
             _webClient.Dispose();
         }
 
-        public IEnumerable<Offer> Research(IEnumerable<Offer> offers)
+        public async Task ResearchAsync(IEnumerable<Offer> offers, Action<int, int, bool> iterationCallback, ICollection<ResearchOffer> researchOffers)
         {
-            var result = new List<Offer>();
+            var i = 0;
             foreach (var offer in offers)
             {
-                var offerName = RozetkaUrls.GetSearchUrl(offer.Name);
-                _webClient.Url = offerName;
-                _webClient.Navigate();
+                var offerSearchUrl = RozetkaUrls.GetSearchUrl(offer.Name);
+                var response = await _webClient.GetAsync(offerSearchUrl);
+                var offerPageHtml = await response.Content.ReadAsStringAsync();
 
-                var priceBlock = _webClient.FindElementByXPath(RozetkaXPathSelectors.PriceBlock);
-                var offerHref = _webClient.FindElementByXPath(RozetkaXPathSelectors.OfferHref).GetAttribute("href");
+                var doc = new HtmlDocument();
+                doc.LoadHtml(offerPageHtml);
+                var offerHrefNode = doc.DocumentNode.SelectSingleNode(RozetkaXPathSelectors.OfferHref);
+                var offerHref = offerHrefNode != null 
+                    ? offerHrefNode.GetAttributeValue("href", string.Empty)
+                    : string.Empty;
 
-                var price = GetPrice(priceBlock.Text);
+                var price = GetPriceJsonFromHtml(offerPageHtml);
                 if (price < offer.Price)
                 {
-                    offer.RozetkaUrl = offerHref;
-                    result.Add(offer);
+                    researchOffers.Add(new ResearchOffer
+                    {
+                        OfferUrl = offer.Url,
+                        RozetkaUrl = offerHref,
+                        MyPrice = offer.Price,
+                        ConcurPrice = price,
+                        Name = offer.Name
+                    });
                 }
+                iterationCallback(++i, researchOffers.Count, false);
             }
-            return result;
+            iterationCallback(i, researchOffers.Count, true);
         }
 
         public IEnumerable<Offer> GetOffersFromXml(string xml)
@@ -60,7 +74,7 @@ namespace RozetkaResearch.BLL.Services
         {
             return new Offer
             {
-                OfferUrl = node.ChildNodes["url"].InnerText,
+                Url = node.ChildNodes["url"].InnerText,
                 Name = node.ChildNodes["name"].InnerText,
                 Price = GetPrice(node.ChildNodes["price"].InnerText)
             };
@@ -76,7 +90,22 @@ namespace RozetkaResearch.BLL.Services
                     price += priceChar;
                 }
             }
-            return decimal.Parse(price);
+            return decimal.Parse(price.Replace('.',','));
+        }
+
+        private decimal GetPriceJsonFromHtml(string html)
+        {
+            var startIndex = html.IndexOf("var pricerawjson");
+            if (startIndex == -1)
+            {
+                return 0;
+            }
+            var beginJson = html.IndexOf('\'', startIndex);
+            var endJson = html.IndexOf('\'', beginJson + 1);
+
+            var json = WebUtility.UrlDecode(html.Substring(beginJson + 1, endJson - beginJson - 1));
+            var obj = JsonConvert.DeserializeObject<RozetkaJsonOffer>(json);
+            return GetPrice(obj.Price);
         }
     }
 }
