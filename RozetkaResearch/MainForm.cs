@@ -117,7 +117,7 @@ namespace RozetkaResearch
                 }
             });
 
-           await _offerService.ResearchAsync(_currentOffers.Take(10).ToArray(), callback, _researchOffers);
+           await _offerService.ResearchAsync(_currentOffers.ToArray(), callback, _researchOffers);
         }
 
         private async void btnReport_Click(object sender, EventArgs e)
