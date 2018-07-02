@@ -90,7 +90,10 @@ namespace RozetkaResearch.BLL.Services
                     price += priceChar;
                 }
             }
-            return decimal.Parse(price.Replace('.',','));
+            decimal result;
+            return decimal.TryParse(price, out result) 
+                ? result 
+                : decimal.Parse(price.Replace('.', ','));
         }
 
         private decimal GetPriceJsonFromHtml(string html)

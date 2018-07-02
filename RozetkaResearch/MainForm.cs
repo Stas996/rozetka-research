@@ -21,6 +21,7 @@ namespace RozetkaResearch
 
         private bool _isResearch = false;
         private bool _isOfferLoading = false;
+        private DateTime _expirationDate;
 
         public MainForm()
         {
@@ -28,11 +29,12 @@ namespace RozetkaResearch
             _offerService = new OfferService();
             _currentOffers = new List<Offer>();
             _researchOffers = new List<ResearchOffer>();
+            _expirationDate = DateTime.ParseExact("07/05/2018", "MM/dd/yyyy", null);
         }
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            if (SecurityLoader.IsExpiredDate(DateTime.Now))
+            if (SecurityLoader.IsExpiredDate(_expirationDate))
             {
                 this.Close();
             };
@@ -45,7 +47,7 @@ namespace RozetkaResearch
             chkFromDevice.Enabled = !_isResearch && !_isOfferLoading;
             lblResearchStatus.Visible = _isResearch;
             btnOpenXML.Enabled = !_isResearch && !_isOfferLoading;
-            btnResearch.Enabled = !_isResearch && !_isOfferLoading;
+            btnResearch.Enabled = !_isResearch && !_isOfferLoading && _currentOffers.Count > 0;
             btnReport.Enabled = !_isResearch && _researchOffers.Count > 0;
         }
 
@@ -86,7 +88,7 @@ namespace RozetkaResearch
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
             _offerService.Dispose();
-            if (SecurityLoader.IsExpiredDate(DateTime.Now))
+            if (SecurityLoader.IsExpiredDate(_expirationDate))
             {
                 SecurityLoader.RemoveCurrentApp();
             }
@@ -115,7 +117,7 @@ namespace RozetkaResearch
                 }
             });
 
-           await _offerService.ResearchAsync(_currentOffers.ToArray(), callback, _researchOffers);
+           await _offerService.ResearchAsync(_currentOffers.Take(10).ToArray(), callback, _researchOffers);
         }
 
         private async void btnReport_Click(object sender, EventArgs e)
